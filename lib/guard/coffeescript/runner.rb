@@ -8,7 +8,7 @@ module Guard
         def run(files, watchers, options = {})
           notify_start(files, options)
           changed_files, errors = compile_files(files, options, watchers)
-          notify_result(changed_files, errors)
+          notify_result(changed_files, errors, options)
 
           changed_files
         rescue ::CoffeeScript::EngineError => e
@@ -74,12 +74,12 @@ module Guard
           directories
         end
 
-        def notify_result(changed_files, errors)
-          if errors.empty?
+        def notify_result(changed_files, errors, options = {})
+          if !errors.empty?
+            ::Guard::Notifier.notify(errors.join("\n"), :title => 'CoffeeScript results', :image => :failed)
+          elsif !options[:hide_success]
             message = "Successfully generated #{ changed_files.join(', ') }"
             ::Guard::Notifier.notify(message, :title => 'CoffeeScript results')
-          else
-            ::Guard::Notifier.notify(errors.join("\n"), :title => 'CoffeeScript results', :image => :failed)
           end
         end
 

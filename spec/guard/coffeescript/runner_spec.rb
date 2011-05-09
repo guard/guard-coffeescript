@@ -60,6 +60,17 @@ describe Guard::CoffeeScript::Runner do
         Guard::Notifier.should_receive(:notify).with('Successfully generated javascripts/a.js', :title => 'CoffeeScript results')
         runner.run(['a.coffee'], [watcher], { :output => 'javascripts' })
       end
+
+      context 'with the :hide_success option set to true' do
+        let(:watcher) { Guard::Watcher.new('^app/coffeescripts/(.*)\.coffee') }
+
+        it 'compiles the CoffeeScripts to the output and creates nested directories' do
+          FileUtils.should_receive(:mkdir_p).with("#{ @project_path }/javascripts/x/y")
+          Guard::Notifier.should_not_receive(:notify).with('Successfully generated javascripts/a.js', :title => 'CoffeeScript results')
+          runner.run(['app/coffeescripts/x/y/a.coffee'], [watcher], { :output => 'javascripts', :hide_success => true })
+        end
+      end
     end
+
   end
 end

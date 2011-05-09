@@ -18,10 +18,14 @@ describe Guard::CoffeeScript do
       it 'sets a default :shallow option' do
         guard.options[:shallow].should be_false
       end
+
+      it 'sets a default :hide_success option' do
+        guard.options[:hide_success].should be_false
+      end
     end
 
     context 'with other options than the default ones' do
-      let(:guard) { Guard::CoffeeScript.new(nil, { :output => 'output_folder', :bare => true, :shallow => true }) }
+      let(:guard) { Guard::CoffeeScript.new(nil, { :output => 'output_folder', :bare => true, :shallow => true, :hide_success => true }) }
 
       it 'sets the provided :bare option' do
         guard.options[:bare].should be_true
@@ -29,6 +33,10 @@ describe Guard::CoffeeScript do
 
       it 'sets the provided :shallow option' do
         guard.options[:shallow].should be_true
+      end
+
+      it 'sets the provided :hide_success option' do
+        guard.options[:hide_success].should be_true
       end
     end
 
@@ -74,7 +82,8 @@ describe Guard::CoffeeScript do
       Guard::CoffeeScript::Inspector.should_receive(:clean).with(['a.coffee', 'b.coffee']).and_return ['a.coffee']
       Guard::CoffeeScript::Runner.should_receive(:run).with(['a.coffee'], [], {
           :bare => false,
-          :shallow => false }).and_return ['a.js']
+          :shallow => false,
+          :hide_success => false }).and_return ['a.js']
       guard.run_on_change(['a.coffee', 'b.coffee'])
     end
 

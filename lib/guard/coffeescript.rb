@@ -15,7 +15,8 @@ module Guard
 
       super(watchers, {
           :bare => false,
-          :shallow => false
+          :shallow => false,
+          :hide_success => false,
       }.merge(options))
     end
 
