@@ -33,6 +33,31 @@ describe Guard::CoffeeScript::Runner do
       end
     end
 
+    context 'with the :bare option set to an array of filenames' do
+      let(:watcher) { Guard::Watcher.new(%r{src/.+\.coffee}) }
+      
+      before do
+        runner.unstub(:compile)
+        ::CoffeeScript.stub(:compile)
+        File.stub(:read) {|file| file}
+      end
+
+      after do
+        runner.stub(:compile).and_return ''; ::CoffeeScript.unstub(:compile) 
+      end
+
+      it 'should compile files in the list without the outer function wrapper' do
+        ::CoffeeScript.should_receive(:compile).with 'src/a.coffee', hash_including(:bare => true) 
+        runner.run(['src/a.coffee', 'src/b.coffee'], [watcher], {:output => 'target', :bare => ['a.coffee']})
+      end
+
+      it 'should compile files not in the list with the outer function wrapper' do
+        ::CoffeeScript.should_receive(:compile).with 'src/b.coffee', hash_including(:bare => false) 
+        runner.run(['src/a.coffee', 'src/b.coffee'], [watcher], {:output => 'target', :bare => ['a.coffee']})
+      end
+
+    end
+
     context 'with the :shallow option set to false' do
       let(:watcher) { Guard::Watcher.new('^app/coffeescripts/(.*)\.coffee') }
 

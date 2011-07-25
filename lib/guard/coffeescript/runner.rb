@@ -45,7 +45,17 @@ module Guard
         end
 
         def compile(file, options)
-          ::CoffeeScript.compile(File.read(file), options)
+          file_options = options_for_file(file, options)
+          ::CoffeeScript.compile(File.read(file), file_options)
+        end
+
+        def options_for_file(file, options)
+          return options unless options[:bare].respond_to? :include?
+          file_options = options.clone
+          filename = file[/([^\/]*)\.coffee/]
+          file_options[:bare] = file_options[:bare].include?(filename)
+
+          file_options
         end
 
         def process_compile_result(content, file, directory)
