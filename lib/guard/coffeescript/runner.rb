@@ -87,7 +87,7 @@ module Guard
 
         def notify_result(changed_files, errors, options = {})
           if !errors.empty?
-            Formatter.notify(errors.join("\n"), :title => 'CoffeeScript results', :image => :failed)
+            Formatter.notify(errors.join("\n"), :title => 'CoffeeScript results', :image => :failed, :priority => 2)
           elsif !options[:hide_success]
             message = "Successfully generated #{ changed_files.join(', ') }"
             Formatter.success(message)
