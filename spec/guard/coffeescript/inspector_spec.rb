@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe Guard::CoffeeScript::Inspector do
   before do
-    Dir.stub(:glob).and_return 'a.coffee'
+    File.should_receive(:exists?).with("a.coffee").and_return true
   end
 
   let(:inspector) { Guard::CoffeeScript::Inspector }
@@ -17,12 +17,8 @@ describe Guard::CoffeeScript::Inspector do
     end
 
     it 'removes non-coffee files' do
-      inspector.clean(['a.coffee', 'b.txt']).should == ['a.coffee']
-    end
-
-    it 'frees up the list of coffee script files' do
-      inspector.should_receive(:clear_coffee_files_list)
-      inspector.clean(['a.coffee'])
+      File.should_receive(:exists?).with("doesntexist.coffee").and_return false
+      inspector.clean(['a.coffee', 'b.txt', 'doesntexist.coffee']).should == ['a.coffee']
     end
 
   end
