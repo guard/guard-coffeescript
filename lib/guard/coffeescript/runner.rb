@@ -28,6 +28,34 @@ module Guard
           [changed_files, errors.empty?]
         end
 
+        # The remove function deals with CoffeeScript file removal by
+        # locating the output javascript file and removing it.
+        #
+        # @param [Array<String>] paths the spec files or directories
+        # @param [Array<Guard::Watcher>] watchers the Guard watchers in the block
+        # @param [Hash] options the options for the removal
+        # @option options [String] :output the output directory
+        # @option options [Boolean] :shallow do not create nested directories
+        #
+        def remove(files, watchers, options = { })
+          removed_files = []
+          directories   = detect_nested_directories(watchers, files, options)
+
+          directories.each do |directory, scripts|
+            scripts.each do |file|
+              javascript = javascript_file_name(file, directory)
+              if File.exists?(javascript)
+                FileUtils.remove_file(javascript)
+                removed_files << javascript
+              end
+            end
+          end
+
+          message = "Removed #{ removed_files.join(', ') }"
+          Formatter.success(message)
+          Formatter.notify(message, :title => 'CoffeeScript results')
+        end
+
         private
 
         # Generates a start compilation notification.
@@ -113,10 +141,20 @@ module Guard
         def write_javascript_file(content, file, directory, options)
           directory = Dir.pwd if !directory || directory.empty?
           FileUtils.mkdir_p(File.expand_path(directory)) if !File.directory?(directory) && !options[:noop]
-          filename = File.join(directory, File.basename(file.gsub(/(js\.coffee|coffee)$/, 'js')))
+          filename = javascript_file_name(file, directory)
           File.open(File.expand_path(filename), 'w') { |f| f.write(content) } if !options[:noop]
 
           filename
+        end
+
+        # Calculates the output filename from the coffescript filename and
+        # the output directory
+        #
+        # @param [string] file the CoffeeScript file name
+        # @param [String] directory the output directory
+        #
+        def javascript_file_name(file, directory)
+          File.join(directory, File.basename(file.gsub(/(js\.coffee|coffee)$/, 'js')))
         end
 
         # Detects the output directory for each CoffeeScript file. Builds

@@ -80,10 +80,7 @@ module Guard
     # @raise [:task_has_failed] when run_on_change has failed
     #
     def run_on_removals(paths)
-      Inspector.clean(paths).each do |file|
-        javascript = file.gsub(/(js\.coffee|coffee)$/, 'js')
-        File.remove(javascript) if File.exists?(javascript)
-      end
+      Runner.remove(Inspector.clean(paths, :missing_ok => true), watchers, options)
     end
 
     private
