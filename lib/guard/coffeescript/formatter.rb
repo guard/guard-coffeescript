@@ -45,7 +45,8 @@ module Guard
         # @option options [Boolean] :reset reset the UI
         #
         def success(message, options = { })
-          ::Guard::UI.info(color(message, ';32'), options)
+          stamped_message = "#{Time.now.strftime('%r')} #{message}"
+          ::Guard::UI.info(color(stamped_message, ';32'), options)
         end
 
         # Outputs a system notification.
