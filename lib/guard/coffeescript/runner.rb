@@ -95,7 +95,7 @@ module Guard
 
                 if options[:error_to_js]
                   js_error_message = "throw \"#{ error_message }\";"
-                  changed_files << write_javascript_file(js_error_message, file, directory, options)
+                  changed_files << write_javascript_file(js_error_message, nil, file, directory, options)
                 end
 
                 errors << error_message
