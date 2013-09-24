@@ -5,6 +5,8 @@ module Guard
     module Runner
       class << self
 
+        attr_accessor :last_run_failed
+
         # The CoffeeScript runner handles the CoffeeScript compilation,
         # creates nested directories and the output file, writes the result
         # to the console and triggers optional system notifications.
@@ -244,8 +246,10 @@ module Guard
         #
         def notify_result(changed_files, errors, options = { })
           if !errors.empty?
+            self.last_run_failed = true
             Formatter.notify(errors.join("\n"), :title => 'CoffeeScript results', :image => :failed, :priority => 2)
-          elsif !options[:hide_success]
+          elsif !options[:hide_success] || last_run_failed
+            self.last_run_failed = false
             message = "Successfully #{ options[:noop] ? 'verified' : 'generated' } #{ changed_files.join(', ') }"
             Formatter.success(message)
             Formatter.notify(message, :title => 'CoffeeScript results')

@@ -239,6 +239,32 @@ describe Guard::CoffeeScript::Runner do
       end
     end
 
+    context 'with :hide_success over multiple runs' do
+      it 'shows the failure message every time' do
+        runner.should_receive(:compile).twice.and_raise ::CoffeeScript::CompilationError.new("Parse error on line 2: Unexpected 'UNARY'")
+        formatter.should_receive(:error).twice.with("a.coffee: Parse error on line 2: Unexpected 'UNARY'")
+        formatter.should_receive(:notify).twice.with("a.coffee: Parse error on line 2: Unexpected 'UNARY'",
+                                               :title => 'CoffeeScript results',
+                                               :image => :failed,
+                                               :priority => 2)
+
+        2.times { runner.run(['a.coffee'], [watcher], { :output => 'javascripts' }) }
+      end
+
+      it 'shows the success message only when previous attempt was failure' do
+        runner.should_receive(:compile).and_raise ::CoffeeScript::CompilationError.new("Parse error on line 2: Unexpected 'UNARY'")
+        runner.run(['a.coffee'], [watcher], { :output => 'javascripts',
+                                              :hide_success => true })
+
+        runner.stub(:compile).and_return ''
+        formatter.should_receive(:success).with('Successfully generated javascripts/a.js')
+        formatter.should_receive(:notify).with('Successfully generated javascripts/a.js',
+                                                   :title => 'CoffeeScript results')
+        runner.run(['a.coffee'], [watcher], { :output => 'javascripts',
+                                              :hide_success => true })
+      end
+    end
+
   end
 
   describe '#remove' do

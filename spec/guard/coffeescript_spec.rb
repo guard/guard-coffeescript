@@ -43,7 +43,7 @@ describe Guard::CoffeeScript do
 
     end
 
-    context 'with other options than the default ones' do
+    context 'with options besides the defaults' do
       let(:guard) { Guard::CoffeeScript.new(nil, { :output       => 'output_folder',
                                                    :bare         => true,
                                                    :shallow      => true,
