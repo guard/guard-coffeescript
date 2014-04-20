@@ -186,7 +186,7 @@ module Guard
 
           if options[:source_map]
             map_name = filename + '.map'
-            js += "\n/*\n//@ sourceMappingURL=#{File.basename(map_name)}\n*/\n"
+            js += "\n//# sourceMappingURL=#{File.basename(map_name)}\n"
           end
 
           FileUtils.mkdir_p(File.expand_path(directory)) unless File.directory?(directory)
