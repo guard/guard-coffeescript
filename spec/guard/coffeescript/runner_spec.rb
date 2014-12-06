@@ -10,6 +10,7 @@ RSpec.describe Guard::CoffeeScript::Runner do
     allow(FileUtils).to receive(:mkdir_p)
     allow(FileUtils).to receive(:remove_file)
     allow(File).to receive(:open)
+    Guard::CoffeeScript::Runner.last_run_failed = false
   end
 
   describe '#run' do
