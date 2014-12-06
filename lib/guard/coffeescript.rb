@@ -1,34 +1,31 @@
-require 'guard'
-require 'guard/guard'
-require 'guard/watcher'
+require 'guard/compat/plugin'
 
 module Guard
-
   # The CoffeeScript guard that gets notifications about the following
   # Guard events: `start`, `stop`, `reload`, `run_all` and `run_on_change`.
   #
-  class CoffeeScript < Guard
-
-    autoload :Formatter, 'guard/coffeescript/formatter'
-    autoload :Inspector, 'guard/coffeescript/inspector'
-    autoload :Runner, 'guard/coffeescript/runner'
+  class CoffeeScript < Plugin
+    require 'guard/coffeescript/formatter'
+    require 'guard/coffeescript/inspector'
+    require 'guard/coffeescript/runner'
 
     DEFAULT_OPTIONS = {
-        :bare         => false,
-        :shallow      => false,
-        :hide_success => false,
-        :noop         => false,
-        :error_to_js  => false,
-        :all_on_start => false,
-        :source_map   => false
+      bare: false,
+      shallow: false,
+      hide_success: false,
+      noop: false,
+      error_to_js: false,
+      all_on_start: false,
+      source_map: false
     }
 
     # Initialize Guard::CoffeeScript.
     #
-    # @param [Array<Guard::Watcher>] watchers the watchers in the Guard block
+
     # @param [Hash] options the options for the Guard
     # @option options [String] :input the input directory
     # @option options [String] :output the output directory
+    # @option options [Array<Guard::Watcher>] :watchers the watchers in the Guard block
     # @option options [Boolean] :bare do not wrap the output in a top level function
     # @option options [Boolean] :shallow do not create nested directories
     # @option options [Boolean] :hide_success hide success message notification
@@ -36,16 +33,23 @@ module Guard
     # @option options [Boolean] :noop do not generate an output file
     # @option options [Boolean] :source_map generate the source map files
     #
-    def initialize(watchers = [], options = {})
-      watchers = [] if !watchers
+
+    attr_reader :patterns
+
+    def initialize(options = {})
       defaults = DEFAULT_OPTIONS.clone
 
-      if options[:input]
-        defaults.merge!({ :output => options[:input] })
-        watchers << ::Guard::Watcher.new(%r{^#{ options[:input] }/(.+\.(?:coffee|coffee\.md|litcoffee))$})
-      end
+      @patterns = options.dup.delete(:patterns) || []
 
-      super(watchers, defaults.merge(options))
+      msg = 'Invalid :patterns argument. Expected: Array, got %s'
+      fail ArgumentError, format(msg, @patterns.inspect) unless @patterns.is_a?(Array)
+
+      msg = ':input option not provided (see current template Guardfile)'
+      fail msg unless options[:input]
+
+      options[:output] = options[:input] unless options[:output]
+
+      super(defaults.merge(options))
     end
 
     # Gets called once when Guard starts.
@@ -61,7 +65,14 @@ module Guard
     # @raise [:task_has_failed] when stop has failed
     #
     def run_all
-      run_on_modifications(Watcher.match_files(self, Dir.glob('**{,/*/**}/*.{coffee,coffee.md,litcoffee}')))
+      found = Dir.glob('**{,/*/**}/*.{coffee,coffee.md,litcoffee}')
+      found.select! do |file|
+        @patterns.any? do |pattern|
+          pattern.match(file)
+        end
+      end
+
+      run_on_modifications(found)
     end
 
     # Gets called when watched paths and files have changes.
@@ -70,7 +81,7 @@ module Guard
     # @raise [:task_has_failed] when stop has failed
     #
     def run_on_modifications(paths)
-      changed_files, success = Runner.run(Inspector.clean(paths), watchers, options)
+      _changed_files, success = Runner.run(Inspector.clean(paths), @patterns, options)
 
       throw :task_has_failed unless success
     end
@@ -81,8 +92,7 @@ module Guard
     # @raise [:task_has_failed] when run_on_change has failed
     #
     def run_on_removals(paths)
-      Runner.remove(Inspector.clean(paths, :missing_ok => true), watchers, options)
+      Runner.remove(Inspector.clean(paths, missing_ok: true), @patterns, options)
     end
-
   end
 end

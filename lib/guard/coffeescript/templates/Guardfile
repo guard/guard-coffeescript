@@ -1,1 +1,9 @@
-guard 'coffeescript', :input => 'app/assets/javascripts'
+coffeescript_options = {
+  input: 'app/assets/javascripts',
+  output: 'app/assets/javascripts',
+  patterns: %r{^app/assets/javascripts/(.+\.(?:coffee|coffee\.md|litcoffee))$}
+}
+
+guard 'coffeescript', coffeescript_options do
+  coffeescript_patterns.each { |pattern| watch(pattern) }
+end

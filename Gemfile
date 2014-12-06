@@ -21,3 +21,7 @@ platforms :rbx do
   gem 'psych'
   gem 'json'
 end
+
+group :development do
+  gem 'rubocop', github: 'bbatsov/rubocop', branch: 'master', require: false
+end

@@ -4,7 +4,6 @@ module Guard
   class CoffeeScript
     module Runner
       class << self
-
         attr_accessor :last_run_failed
 
         # The CoffeeScript runner handles the CoffeeScript compilation,
@@ -12,7 +11,7 @@ module Guard
         # to the console and triggers optional system notifications.
         #
         # @param [Array<String>] files the spec files or directories
-        # @param [Array<Guard::Watcher>] watchers the Guard watchers in the block
+        # @param [Array<Regexp>] patterns the patterns in the block
         # @param [Hash] options the options for the execution
         # @option options [String] :input the input directory
         # @option options [String] :output the output directory
@@ -23,11 +22,10 @@ module Guard
         # @option options [Boolean] :source_map generate the source map files
         # @return [Array<Array<String>, Boolean>] the result for the compilation run
         #
-        def run(files, watchers, options = { })
+        def run(files, patterns, options = {})
           notify_start(files, options)
-          changed_files, errors = compile_files(files, watchers, options)
+          changed_files, errors = compile_files(files, patterns, options)
           notify_result(changed_files, errors, options)
-
           [changed_files, errors.empty?]
         end
 
@@ -35,30 +33,30 @@ module Guard
         # locating the output javascript file and removing it.
         #
         # @param [Array<String>] files the spec files or directories
-        # @param [Array<Guard::Watcher>] watchers the Guard watchers in the block
+        # @param [Array<Regexp>] patterns the patterns in the block
         # @param [Hash] options the options for the removal
         # @option options [String] :output the output directory
         # @option options [Boolean] :shallow do not create nested directories
         #
-        def remove(files, watchers, options = { })
+        def remove(files, patterns, options = {})
           removed_files = []
-          directories   = detect_nested_directories(watchers, files, options)
+          directories   = detect_nested_directories(files, patterns, options)
 
           directories.each do |directory, scripts|
             scripts.each do |file|
               javascript = javascript_file_name(file, directory)
-              if File.exists?(javascript)
+              if File.exist?(javascript)
                 FileUtils.remove_file(javascript)
                 removed_files << javascript
               end
             end
           end
 
-          if removed_files.length > 0
-            message = "Removed #{ removed_files.join(', ') }"
-            Formatter.success(message)
-            Formatter.notify(message, :title => 'CoffeeScript results')
-          end
+          return unless removed_files.length > 0
+
+          message = "Removed #{ removed_files.join(', ') }"
+          Formatter.success(message)
+          Formatter.notify(message, title: 'CoffeeScript results')
         end
 
         private
@@ -71,20 +69,19 @@ module Guard
         #
         def notify_start(files, options)
           message = options[:message] || (options[:noop] ? 'Verify ' : 'Compile ') + files.join(', ')
-          Formatter.info(message, :reset => true)
+          Formatter.info(message, reset: true)
         end
 
         # Compiles all CoffeeScript files and writes the JavaScript files.
         #
         # @param [Array<String>] files the files to compile
-        # @param [Array<Guard::Watcher>] watchers the Guard watchers in the block
         # @param [Hash] options the options for the execution
         # @return [Array<Array<String>, Array<String>] the result for the compilation run
         #
-        def compile_files(files, watchers, options)
+        def compile_files(files, patterns, options)
           errors        = []
           changed_files = []
-          directories   = detect_nested_directories(watchers, files, options)
+          directories   = detect_nested_directories(files, patterns, options)
 
           directories.each do |directory, scripts|
             scripts.each do |file|
@@ -92,7 +89,7 @@ module Guard
                 js, map = compile(file, options)
                 changed_files << write_javascript_file(js, map, file, directory, options)
 
-              rescue => e
+              rescue RuntimeError, ExecJS::ProgramError => e
                 error_message = file + ': ' + e.message.to_s
 
                 if options[:error_to_js]
@@ -123,6 +120,7 @@ module Guard
           if options[:source_map]
             file_options.merge! options_for_source_map(filename, options)
             result = ::CoffeeScript.compile(file, file_options)
+            fail 'CoffeeScript.compile returned nil' if result.nil?
             js, map = result['js'], result['v3SourceMap']
           else
             js  = ::CoffeeScript.compile(file, file_options)
@@ -147,9 +145,7 @@ module Guard
             file_options[:bare] = file_options[:bare].include?(filename)
           end
 
-          if file[/\.(?:coffee\.md|litcoffee)$/]
-            file_options[:literate] = true
-          end
+          file_options[:literate] = true if file[/\.(?:coffee\.md|litcoffee)$/]
 
           file_options
         end
@@ -164,10 +160,10 @@ module Guard
           filename = Pathname.new(filename).relative_path_from(Pathname.new(options[:input])).to_s if options[:input]
 
           {
-            :sourceMap => true,
-            :generatedFile => filename.gsub(/((?:js\.)?(?:coffee|coffee\.md|litcoffee))$/, 'js'),
-            :sourceFiles => [filename],
-            :sourceRoot => options[:source_root] || options[:input] || '',
+            sourceMap: true,
+            generatedFile: filename.gsub(/((?:js\.)?(?:coffee|coffee\.md|litcoffee))$/, 'js'),
+            sourceFiles: [filename],
+            sourceRoot: options[:source_root] || options[:input] || ''
           }
         end
 
@@ -190,10 +186,10 @@ module Guard
 
           if options[:source_map]
             map_name = filename + '.map'
-            js += "\n/*\n//@ sourceMappingURL=#{File.basename(map_name)}\n*/\n"
+            js += "\n//# sourceMappingURL=#{File.basename(map_name)}\n"
           end
 
-          FileUtils.mkdir_p(File.expand_path(directory)) if !File.directory?(directory)
+          FileUtils.mkdir_p(File.expand_path(directory)) unless File.directory?(directory)
           File.open(File.expand_path(filename), 'w') { |f| f.write(js) }
 
           if options[:source_map]
@@ -215,28 +211,28 @@ module Guard
         end
 
         # Detects the output directory for each CoffeeScript file. Builds
-        # the product of all watchers and assigns to each directory
+        # the product of all patterns and assigns to each directory
         # the files to which it belongs to.
         #
-        # @param [Array<Guard::Watcher>] watchers the Guard watchers in the block
         # @param [Array<String>] files the CoffeeScript files
+        # @param [Array<Regexp>] patterns the patterns in the block
         # @param [Hash] options the options for the execution
         # @option options [String] :output the output directory
         # @option options [Boolean] :shallow do not create nested directories
         #
-        def detect_nested_directories(watchers, files, options)
+        def detect_nested_directories(files, patterns, options)
           return { options[:output] => files } if options[:shallow]
 
-          directories = { }
+          directories = {}
 
-          watchers.product(files).each do |watcher, file|
-            if matches = file.match(watcher.pattern)
-              target = matches[1] ? File.join(options[:output], File.dirname(matches[1])).gsub(/\/\.$/, '') : options[:output] || File.dirname(file)
-              if directories[target]
-                directories[target] << file
-              else
-                directories[target] = [file]
-              end
+          patterns.product(files).each do |pattern, file|
+            next unless (matches = file.match(pattern))
+
+            target = matches[1] ? File.join(options[:output], File.dirname(matches[1])).gsub(/\/\.$/, '') : options[:output] || File.dirname(file)
+            if directories[target]
+              directories[target] << file
+            else
+              directories[target] = [file]
             end
           end
 
@@ -251,18 +247,17 @@ module Guard
         # @option options [Boolean] :hide_success hide success message notification
         # @option options [Boolean] :noop do not generate an output file
         #
-        def notify_result(changed_files, errors, options = { })
+        def notify_result(changed_files, errors, options = {})
           if !errors.empty?
             self.last_run_failed = true
-            Formatter.notify(errors.join("\n"), :title => 'CoffeeScript results', :image => :failed, :priority => 2)
+            Formatter.notify(errors.join("\n"), title: 'CoffeeScript results', image: :failed, priority: 2)
           elsif !options[:hide_success] || last_run_failed
             self.last_run_failed = false
             message = "Successfully #{ options[:noop] ? 'verified' : 'generated' } #{ changed_files.join(', ') }"
             Formatter.success(message)
-            Formatter.notify(message, :title => 'CoffeeScript results')
+            Formatter.notify(message, title: 'CoffeeScript results')
           end
         end
-
       end
     end
   end

@@ -1,5 +1,5 @@
 # -*- encoding: utf-8 -*-
-$:.push File.expand_path('../lib', __FILE__)
+$LOAD_PATH.push File.expand_path('../lib', __FILE__)
 require 'guard/coffeescript/version'
 
 Gem::Specification.new do |s|
@@ -16,13 +16,14 @@ Gem::Specification.new do |s|
   s.required_rubygems_version = '>= 1.3.6'
   s.rubyforge_project = 'guard-coffeescript'
 
-  s.add_dependency 'guard', '>= 1.1.0'
+  s.add_dependency 'guard', '>= 2.1.0'
+  s.add_dependency 'guard-compat', '~> 0.3'
   s.add_dependency 'coffee-script', '>= 2.2.0'
 
   s.add_development_dependency 'bundler'
   s.add_development_dependency 'guard-rspec'
-  s.add_development_dependency 'rspec'
+  s.add_development_dependency 'rspec', '~> 3.1'
 
-  s.files        = Dir.glob('{lib}/**/*') + %w[LICENSE README.md]
+  s.files        = Dir.glob('{lib}/**/*') + %w(LICENSE README.md)
   s.require_path = 'lib'
 end
