@@ -1,6 +1,6 @@
 source 'https://rubygems.org'
 
-gemspec
+gemspec development_group: :gem_build_tools
 
 gem 'rake'
 
@@ -22,6 +22,11 @@ platforms :rbx do
   gem 'json'
 end
 
+group :test do
+  gem 'rspec', '~> 3.1'
+end
+
 group :development do
-  gem 'rubocop', github: 'bbatsov/rubocop', branch: 'master', require: false
+  gem 'guard-rspec'
+  gem 'rubocop'
 end
