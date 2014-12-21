@@ -1,17 +1,22 @@
 require 'bundler/gem_tasks'
 
+def ci?
+  ENV['CI'] == 'true'
+end
+
+default_tasks = []
+
 require 'rspec/core/rake_task'
-RSpec::Core::RakeTask.new(:spec) do |t|
+default_tasks << RSpec::Core::RakeTask.new(:spec) do |t|
   t.verbose = false unless ENV.key?('CI')
 end
 
-if ENV['CI'] != 'true'
+unless ci?
   require 'rubocop/rake_task'
-  RuboCop::RakeTask.new(:rubocop)
-  task default: [:spec, :rubocop]
-else
-  task default: [:spec]
+  default_tasks << RuboCop::RakeTask.new(:rubocop)
 end
+
+task default: default_tasks.map(&:name)
 
 namespace(:spec) do
   desc 'Run all specs on multiple ruby versions (requires rvm)'

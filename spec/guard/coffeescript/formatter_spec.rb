@@ -1,7 +1,6 @@
 RSpec.describe Guard::CoffeeScript::Formatter do
   let(:formatter) { Guard::CoffeeScript::Formatter }
-  let(:ui) { Guard::UI }
-  let(:notifier) { Guard::Notifier }
+  let(:ui) { Guard::Compat::UI }
 
   describe '.info' do
     it 'shows an info message' do
@@ -34,7 +33,7 @@ RSpec.describe Guard::CoffeeScript::Formatter do
 
   describe '.notify' do
     it 'shows an info message' do
-      expect(notifier).to receive(:notify).with('Notify message',  image: :failed)
+      expect(ui).to receive(:notify).with('Notify message',  image: :failed)
       formatter.notify('Notify message',  image: :failed)
     end
   end
