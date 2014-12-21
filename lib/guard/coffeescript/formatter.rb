@@ -13,7 +13,7 @@ module Guard
         # @option options [Boolean] :reset reset the UI
         #
         def info(message, options = {})
-          ::Guard::UI.info(message, options)
+          Compat::UI.info(message, options)
         end
 
         # Print a debug message to the console.
@@ -23,7 +23,7 @@ module Guard
         # @option options [Boolean] :reset reset the UI
         #
         def debug(message, options = {})
-          ::Guard::UI.debug(message, options)
+          Compat::UI.debug(message, options)
         end
 
         # Print a red error message to the console.
@@ -33,7 +33,7 @@ module Guard
         # @option options [Boolean] :reset reset the UI
         #
         def error(message, options = {})
-          ::Guard::UI.error(color(message, ';31'), options)
+          Compat::UI.error(color(message, ';31'), options)
         end
 
         # Print a green success message to the console.
@@ -44,7 +44,7 @@ module Guard
         #
         def success(message, options = {})
           stamped_message = "#{Time.now.strftime('%r')} #{message}"
-          ::Guard::UI.info(color(stamped_message, ';32'), options)
+          Compat::UI.info(color(stamped_message, ';32'), options)
         end
 
         # Outputs a system notification.
@@ -55,7 +55,7 @@ module Guard
         # @option options [String] :title the title of the system notification
         #
         def notify(message, options = {})
-          ::Guard::Notifier.notify(message, options)
+          Compat::UI.notify(message, options)
         end
 
         private
@@ -66,7 +66,7 @@ module Guard
         # @param [String] color_code the color code
         #
         def color(text, color_code)
-          ::Guard::UI.send(:color_enabled?) ? "\e[0#{ color_code }m#{ text }\e[0m" : text
+          Compat::UI.send(:color_enabled?) ? "\e[0#{ color_code }m#{ text }\e[0m" : text
         end
       end
     end
