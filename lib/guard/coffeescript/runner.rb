@@ -89,7 +89,7 @@ module Guard
                 js, map = compile(file, options)
                 changed_files << write_javascript_file(js, map, file, directory, options)
 
-              rescue RuntimeError, ExecJS::ProgramError => e
+              rescue RuntimeError, ::CoffeeScript::EngineError, ::CoffeeScript::CompilationError => e
                 error_message = file + ': ' + e.message.to_s
 
                 if options[:error_to_js]
