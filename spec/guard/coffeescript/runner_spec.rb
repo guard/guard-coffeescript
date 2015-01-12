@@ -249,6 +249,20 @@ RSpec.describe Guard::CoffeeScript::Runner do
       end
     end
 
+    context 'with engine errors' do
+      context 'without the :noop option' do
+        it 'shows the error messages' do
+          expect(runner).to receive(:compile).and_raise ::CoffeeScript::EngineError.new("SyntaxError: [stdin]:1:5: reserved word \"true\" can't be assigned")
+          expect(formatter).to receive(:error).once.with("a.coffee: SyntaxError: [stdin]:1:5: reserved word \"true\" can't be assigned")
+          expect(formatter).to receive(:notify).with("a.coffee: SyntaxError: [stdin]:1:5: reserved word \"true\" can't be assigned",
+                                                     title: 'CoffeeScript results',
+                                                     image: :failed,
+                                                     priority: 2)
+          runner.run(['a.coffee'], [pattern],  output: 'javascripts')
+        end
+      end
+    end
+
     context 'without compilation errors' do
       context 'without the :noop option' do
         it 'shows a success messages' do
