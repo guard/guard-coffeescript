@@ -20,6 +20,7 @@ module Guard
         # @option options [Boolean] :hide_success hide success message notification
         # @option options [Boolean] :noop do not generate an output file
         # @option options [Boolean] :source_map generate the source map files
+        # @option options [Proc] :pre_process Proc or lambda to run with the file content before compilation
         # @return [Array<Array<String>, Boolean>] the result for the compilation run
         #
         def run(files, patterns, options = {})
@@ -111,10 +112,12 @@ module Guard
         # @param [String] filename the CoffeeScript file n
         # @param [Hash] options the options for the execution
         # @option options [Boolean] :source_map generate the source map files
+        # @option options [Proc] :pre_process Proc or lambda to run with the file content before compilation
         # @return [Array<String, String>] the JavaScript source and the source map
         #
         def compile(filename, options)
           file = File.read(filename)
+          file = options[:pre_process].call(file) if options[:pre_process].is_a? Proc
           file_options = options_for_file(filename, options)
 
           if options[:source_map]
