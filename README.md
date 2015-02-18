@@ -188,6 +188,10 @@ There following options can be passed to Guard::CoffeeScript:
                                     # all sources
                                     # default: nil (using the `:input` directory)
 
+:pre_process => Proc.new {|f|...}   # Proc or lambda to pre process the script content before compilation.
+                                    # Accept one argument which is the file content.
+                                    # default: nil
+
 :hide_success => true               # Disable successful compilation messages.
                                     # default: false
 

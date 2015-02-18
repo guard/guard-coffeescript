@@ -1,3 +1,6 @@
+require 'rake/ext/pathname'
+
+require 'guard/coffeescript/version'
 require 'guard/compat/test/helper'
 require 'guard/coffeescript'
 
