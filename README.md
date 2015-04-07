@@ -8,6 +8,25 @@ Tested on MRI Ruby 1.9.3, 2.0.0, 2.1.0 and the latest versions of JRuby & Rubini
 If you have any questions please join us on our [Google group](http://groups.google.com/group/guard-dev) or on `#guard`
 (irc.freenode.net).
 
+# IMPORTANT NOTES!
+
+Especially if you are upgrading from earlier guard-coffeescript versions, please make sure you have the `:patterns` options set (example take from default Guardfile):
+
+```ruby
+coffeescript_options = {
+  input: 'app/assets/javascripts',
+  output: 'app/assets/javascripts',
+  patterns: [%r{^app/assets/javascripts/(.+\.(?:coffee|coffee\.md|litcoffee))$}]
+}
+
+guard 'coffeescript', coffeescript_options do
+  coffeescript_options[:patterns].each { |pattern| watch(pattern) }
+end
+```
+
+*Please browse through the [issues](https://github.com/guard/guard-coffeescript/issues) if you have trouble, because the docs and examples below may not be up to date. Contributions are more than welcome.*
+
+
 ## Install
 
 The simplest way to install Guard is to use [Bundler](http://gembundler.com/).
