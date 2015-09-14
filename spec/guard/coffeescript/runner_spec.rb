@@ -131,6 +131,13 @@ RSpec.describe Guard::CoffeeScript::Runner do
                    [pattern],  output: 'javascripts', shallow: false)
       end
 
+      context 'with no folders in the input path' do
+        it 'fails silently because there are no patterns and no output paths' do
+          expect(File).not_to receive(:open)
+          runner.run(['application.coffee'], [], output: 'javascripts', shallow: false)
+        end
+      end
+
       context 'with the :source_map option' do
         it 'generates the source map to the output and creates nested directories' do
           expect(FileUtils).to receive(:mkdir_p).with("#{ @project_path }/javascripts/x/y")
